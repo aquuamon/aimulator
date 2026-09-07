@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://aquuamon.github.io/aimulator/sitemap.xml

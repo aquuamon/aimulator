@@ -1,1 +1,1713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Aimulator+ — Mouse Sensitivity Simulator for FPS Games</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Feel your real mouse sensitivity before you queue up. Aimulator+ simulates true DPI/sens/cm-360 for Valorant, CS2, Apex Legends, Overwatch 2, and Rainbow Six Siege, plus a built-in aim-training minigame.">
+<meta name="keywords" content="mouse sensitivity simulator, sens converter, DPI calculator, cm/360, Valorant sensitivity, CS2 sensitivity, Apex Legends sensitivity, Overwatch 2 sensitivity, Rainbow Six Siege sensitivity, aim trainer">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0a0a0f">
+<link rel="canonical" href="https://aquuamon.github.io/aimulator/">
 
+<!-- Open Graph / Discord / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Aimulator+">
+<meta property="og:title" content="Aimulator+ — Mouse Sensitivity Simulator for FPS Games">
+<meta property="og:description" content="Feel your real mouse sensitivity before you queue up. Simulates true DPI/sens/cm-360 for Valorant, CS2, Apex, Overwatch 2, and R6 Siege, plus a built-in aim minigame.">
+<meta property="og:image" content="https://aquuamon.github.io/aimulator/img/favicons/icon-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:url" content="https://aquuamon.github.io/aimulator/">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Aimulator+ — Mouse Sensitivity Simulator for FPS Games">
+<meta name="twitter:description" content="Feel your real mouse sensitivity before you queue up. Simulates true DPI/sens/cm-360 for Valorant, CS2, Apex, Overwatch 2, and R6 Siege.">
+<meta name="twitter:image" content="https://aquuamon.github.io/aimulator/img/favicons/icon-512.png">
+
+<link rel="icon" type="image/png" href="img/favicons/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="img/favicons/favicon.svg" />
+<link rel="shortcut icon" href="img/favicons/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="img/favicons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-title" content="aimulator+" />
+<link rel="manifest" href="img/favicons/site.webmanifest" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .hidden { display: none !important; }
+
+  body {
+    overflow: hidden;
+    background: #0a0a0f;
+    color: #e2e2e8;
+    font-family: 'Inter', sans-serif;
+    user-select: none;
+  }
+
+  #canvas { display: block; }
+
+  /* HUD Panel */
+  #hud {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 280px;
+    background: rgba(10,10,20,0.92);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    z-index: 50; /* Above overlay */
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease;
+  }
+  #hud.folded {
+    transform: translateX(calc(-100% - 16px));
+  }
+  #hudTab {
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%) translateX(-40px);
+    width: 28px;
+    height: 90px;
+    background: rgba(10,10,20,0.92);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    z-index: 51;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease;
+    color: #666;
+    font-size: 13px;
+    writing-mode: vertical-rl;
+    letter-spacing: 0.05em;
+  }
+  #hudTab.visible { transform: translateY(-50%) translateX(0); opacity: 1; pointer-events: auto; }
+  #hudTab:hover { color: #5dbaf2; border-color: rgba(93,186,242,0.3); }
+
+  .hud-header {
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: #888;
+    text-transform: uppercase;
+  }
+
+  .section {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .section:last-child { border-bottom: none; }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #555;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* Stats row */
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .stat-label { font-size: 12px; color: #777; }
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #e2e2e8;
+  }
+  .stat-value.highlight { color: #5dbaf2; }
+
+  /* Inputs & Selects */
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .input-label { font-size: 12px; color: #777; width: 48px; flex-shrink: 0; }
+
+  input[type="number"], select {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    color: #e2e2e8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 4px 8px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  select {
+    padding-right: 24px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+
+  input[type="number"]:focus, select:focus { border-color: rgba(93,186,242,0.5); }
+  input[type="number"]::-webkit-inner-spin-button { opacity: 0.4; }
+
+  /* DPI presets */
+  .presets {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .preset-btn {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    color: #888;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 0;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .preset-btn:hover { background: rgba(255,255,255,0.1); color: #ccc; }
+  .preset-btn.active {
+    background: rgba(93,186,242,0.12);
+    border-color: rgba(93,186,242,0.4);
+    color: #5dbaf2;
+  }
+
+  /* Lock toggle */
+  .lock-btn {
+    width: 100%;
+    padding: 7px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    color: #888;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.12s;
+    text-align: center;
+  }
+  .lock-btn:hover { background: rgba(255,255,255,0.08); }
+  .lock-btn.active {
+    background: rgba(93,186,242,0.1);
+    border-color: rgba(93,186,242,0.35);
+    color: #5dbaf2;
+  }
+
+  /* Keybinds */
+  .keybinds { display: flex; flex-direction: column; gap: 3px; }
+  .kb-row { display: flex; justify-content: space-between; align-items: center; }
+  .kb-key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #aaa;
+  }
+  .kb-desc { font-size: 11px; color: #555; }
+
+  /* Unlocked overlay — FIXED: light tint, behind HUD, never blocks anything */
+  #overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.25);
+    z-index: 40; /* BELOW HUD (50) so HUD stays fully visible & clickable */
+    gap: 12px;
+    pointer-events: none;
+  }
+  #overlay.hidden { display: none; }
+  #overlay .title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.2;
+  }
+  #overlay .sub {
+    font-size: 14px;
+    color: #666;
+    height: 72px;
+  }
+  #overlay .click-hint {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #5dbaf2;
+    border: 1px solid rgba(93,186,242,0.3);
+    padding: 8px 20px;
+    border-radius: 4px;
+    background: rgba(93,186,242,0.08);
+    top: -32px;
+    position: relative;
+  }
+  #overlay.has-challenge .click-hint {
+    top: 0px;
+  }
+  #challengeBanner {
+    margin-top: 14px;
+    font-size: 13px;
+    color: #5dbaf2;
+    height: 18px;
+  }
+
+  /* NEW: Locked-mode indicator (visible while cursor is locked) */
+  #lockIndicator {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: rgba(10,10,20,0.85);
+    border: 1px solid rgba(93,186,242,0.35);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #5dbaf2;
+    letter-spacing: 0.03em;
+    z-index: 60;
+    pointer-events: none;
+  }
+  #lockIndicator.visible { display: flex; }
+  #lockIndicator .kb-key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    background: rgba(93,186,242,0.15);
+    border: 1px solid rgba(93,186,242,0.4);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #5dbaf2;
+  }
+
+  /* Setup modal for real DPI */
+  #setup {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    pointer-events: auto;
+  }
+  #setup.hidden { display: none; }
+  #setup-box {
+    background: #111118;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 28px 32px;
+    width: 340px;
+    text-align: center;
+  }
+  #setup-box h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+  #setup-box p { font-size: 13px; color: #666; margin-bottom: 20px; line-height: 1.5; }
+  #setup-box input {
+    width: 100%;
+    font-size: 22px;
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+  .setup-presets { display: flex; gap: 6px; margin-bottom: 20px; }
+  .setup-presets button {
+    flex: 1;
+    padding: 6px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    color: #888;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .setup-presets button:hover { color: #ccc; background: rgba(255,255,255,0.1); }
+  .setup-presets button.active {
+    background: rgba(93,186,242,0.15);
+    border-color: rgba(93,186,242,0.5);
+    color: #5dbaf2;
+  }
+  #confirm-dpi {
+    width: 100%;
+    padding: 10px;
+    background: #5dbaf2;
+    border: none;
+    border-radius: 5px;
+    color: #000;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.12s;
+  }
+  #confirm-dpi:hover { opacity: 0.85; }
+
+  /* ============ MINIGAME ============ */
+  #playMinigameBtn {
+    position: fixed;
+    top: calc(16px + var(--hud-h) + 12px);
+    left: 16px;
+    width: 280px;
+    padding: 10px;
+    background: rgba(93,186,242,0.1);
+    border: 1px solid rgba(93,186,242,0.35);
+    border-radius: 8px;
+    color: #5dbaf2;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: all 0.12s;
+    z-index: 50;
+    font-family: 'Inter', sans-serif;
+  }
+  #playMinigameBtn:hover { background: rgba(93,186,242,0.18); }
+  #playMinigameBtn.hidden { display: none; }
+
+  #aboutPanel {
+    position: fixed;
+    top: calc(16px + var(--hud-h) + 12px + 44px);
+    left: 16px;
+    width: 280px;
+    background: rgba(10,10,20,0.92);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 12px 14px;
+    backdrop-filter: blur(12px);
+    z-index: 50;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #999;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease;
+  }
+  #aboutPanel.folded {
+    transform: translateX(calc(-100% - 16px));
+  }
+  #aboutPanel a {
+    color: #5dbaf2;
+    text-decoration: none;
+  }
+  #aboutPanel a:hover { text-decoration: underline; }
+
+  #minigamePanel {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    width: 280px;
+    background: rgba(10,10,20,0.92);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    z-index: 50;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease;
+  }
+  #minigamePanel.hidden { display: none; }
+  #minigamePanel.folded {
+    transform: translateX(calc(100% + 16px));
+  }
+  #mgTab {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%) translateX(40px);
+    width: 28px;
+    height: 90px;
+    background: rgba(10,10,20,0.92);
+    border: 1px solid rgba(93,186,242,0.25);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    z-index: 51;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease;
+    color: #5dbaf2;
+    font-size: 13px;
+    writing-mode: vertical-rl;
+    letter-spacing: 0.05em;
+    text-align: center;
+  }
+  #mgTab.visible { transform: translateY(-50%) translateX(0); opacity: 1; }
+  #minigamePanel .panel-body {
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .mg-close {
+    float: right;
+    cursor: pointer;
+    color: #555;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .mg-close:hover { color: #aaa; }
+
+  .mg-input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    color: #e2e2e8;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    padding: 6px 8px;
+    width: 100%;
+    outline: none;
+    margin-bottom: 8px;
+    transition: border-color 0.15s;
+  }
+  .mg-input:focus { border-color: rgba(93,186,242,0.5); }
+  .mg-input:disabled { opacity: 0.5; }
+
+  .mg-btn-row { display: flex; gap: 6px; margin-bottom: 4px; }
+  .mg-btn {
+    flex: 1;
+    padding: 7px;
+    background: rgba(93,186,242,0.1);
+    border: 1px solid rgba(93,186,242,0.35);
+    border-radius: 4px;
+    color: #5dbaf2;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s;
+    font-family: 'Inter', sans-serif;
+  }
+  .mg-btn:hover { background: rgba(93,186,242,0.18); }
+  .mg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .mg-btn.danger {
+    background: rgba(255,80,80,0.1);
+    border-color: rgba(255,80,80,0.35);
+    color: #ff5050;
+  }
+  .mg-btn.danger:hover { background: rgba(255,80,80,0.18); }
+  .mg-btn.hidden { display: none; }
+
+  .mg-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .mg-stat-label { font-size: 12px; color: #777; }
+  .mg-stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #e2e2e8;
+  }
+  .mg-stat-value.highlight { color: #5dbaf2; }
+
+  .mg-timer-track {
+    height: 6px;
+    width: 100%;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .mg-timer-fill {
+    height: 100%;
+    width: 100%;
+    background: #5dbaf2;
+    transition: width 1s linear;
+  }
+
+  .mg-list {
+    max-height: 120px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .mg-list-entry {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.04);
+    color: #aaa;
+  }
+  .mg-list-entry.fastest { background: rgba(93,186,242,0.12); color: #5dbaf2; }
+  .mg-list-entry.slowest { background: rgba(255,80,80,0.12); color: #ff8080; }
+
+  .mg-lb-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    padding: 3px 0;
+    color: #999;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .mg-lb-row:last-child { border-bottom: none; }
+  .mg-lb-rank { color: #555; width: 20px; }
+  .mg-lb-name { flex: 1; color: #ccc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mg-lb-score { font-family: 'JetBrains Mono', monospace; color: #5dbaf2; }
+
+  /* Countdown overlay on canvas */
+  #mgCountdown {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 96px;
+    font-weight: 700;
+    color: #5dbaf2;
+    text-shadow: 0 0 24px rgba(93,186,242,0.5);
+    z-index: 70;
+    display: none;
+    pointer-events: none;
+    font-family: 'Inter', sans-serif;
+  }
+  #mgCountdown.visible { display: block; }
+
+  /* In-game HUD (score/timer while playing) */
+  #mgLiveHud {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    align-items: center;
+    gap: 16px;
+    background: rgba(10,10,20,0.85);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 8px 20px;
+    z-index: 60;
+    pointer-events: none;
+  }
+  #mgLiveHud.visible { display: flex; }
+  #mgLiveHud .mg-live-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: #5dbaf2;
+  }
+  #mgLiveHud .mg-live-track {
+    width: 140px;
+    height: 5px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  #mgLiveHud .mg-live-fill {
+    height: 100%;
+    background: #5dbaf2;
+    width: 100%;
+    transition: width 1s linear;
+  }
+
+  /* Target crosshair-visible ring (drawn on canvas, no DOM needed) */
+
+  /* Results popup, same visual language as setup modal */
+  #mgResults {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    pointer-events: auto;
+    transition: opacity 0.4s ease;
+    opacity: 1;
+  }
+  #mgResults.visible { display: flex; }
+  #mgResults.fading { opacity: 0; }
+  #mgResults .box {
+    background: #111118;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 28px 32px;
+    width: 300px;
+    text-align: center;
+  }
+  #mgResults h2 { font-size: 18px; font-weight: 600; margin-bottom: 14px; color: #5dbaf2; }
+  #mgResults .row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 6px;
+  }
+  #mgResults .row span:last-child { color: #e2e2e8; font-family: 'JetBrains Mono', monospace; }
+  #mgResults button {
+    width: 100%;
+    margin-top: 16px;
+    padding: 10px;
+    background: #5dbaf2;
+    border: none;
+    border-radius: 5px;
+    color: #000;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.12s;
+  }
+  #mgResults button:hover { opacity: 0.85; }
+
+  #confettiCanvas {
+    position: fixed;
+    inset: 0;
+    z-index: 199;
+    pointer-events: none;
+    display: none;
+  }
+  #confettiCanvas.visible { display: block; }
+
+  /* Pause overlay */
+  #mgPauseOverlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.7);
+    z-index: 180;
+  }
+  #mgPauseOverlay.visible { display: flex; }
+  #mgPauseOverlay .box {
+    background: #111118;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 28px 32px;
+    width: 260px;
+    text-align: center;
+  }
+  #mgPauseOverlay h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; color: #5dbaf2; }
+  #mgPauseOverlay p { font-size: 12px; color: #777; margin-bottom: 18px; }
+  #mgPauseOverlay button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.12s;
+    margin-bottom: 8px;
+  }
+  #mgPauseOverlay button:last-child { margin-bottom: 0; }
+  #mgPauseOverlay button:hover { opacity: 0.85; }
+  #mgResumeBtn { background: #5dbaf2; color: #000; }
+  #mgStopBtn { background: rgba(255,80,80,0.15); border: 1px solid rgba(255,80,80,0.4) !important; color: #ff5050; }
+</style>
+</head>
+<body>
+<noscript>
+  <div style="padding:40px; font-family:sans-serif; color:#e2e2e8; background:#0a0a0f; text-align:center;">
+    <h1>Aimulator+</h1>
+    <p>Aimulator+ is an interactive mouse sensitivity simulator and requires JavaScript to run. Please enable JavaScript in your browser to use it.</p>
+  </div>
+</noscript>
+
+<!-- Setup modal -->
+<div id="setup">
+  <div id="setup-box">
+    <h2>What's your mouse DPI?</h2>
+    <p>This must match your actual hardware DPI so the simulator can scale correctly.</p>
+    <input type="number" id="realDpiInput" value="1200" min="100" max="32000" step="100">
+    <div class="setup-presets">
+      <button onclick="setSetupDpi(400)">400</button>
+      <button onclick="setSetupDpi(800)">800</button>
+      <button class="active" onclick="setSetupDpi(1200)">1200</button>
+      <button onclick="setSetupDpi(1600)">1600</button>
+      <button onclick="setSetupDpi(3200)">3200</button>
+    </div>
+    <button id="confirm-dpi" onclick="confirmSetup()">Start Simulator</button>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-header">Aimulator+ <span style="opacity:0.5; font-weight:400; text-transform:none; letter-spacing:normal;">— Sens Simulator</span></div>
+
+  <div class="section">
+    <div class="section-label">Target Game</div>
+    <div class="input-row">
+      <select id="gameSelect" onchange="applyGamePreset()">
+        <option value="default">Default</option>
+        <option value="valorant">Valorant</option>
+        <option value="cs2">Counter-Strike 2</option>
+        <option value="apex">Apex Legends</option>
+        <option value="ow2">Overwatch 2</option>
+        <option value="r6">Rainbow Six Siege</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Stats</div>
+    <div class="stat-row">
+      <span class="stat-label">Real DPI</span>
+      <span class="stat-value" id="realDpiDisplay">1200</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Sim DPI</span>
+      <span class="stat-value highlight" id="simDpiDisplay">1200</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">eDPI</span>
+      <span class="stat-value" id="edpiDisplay">—</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">cm/360</span>
+      <span class="stat-value" id="cm360Display">—</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Sensitivity</div>
+    <div class="input-row">
+      <span class="input-label">Sens</span>
+      <input type="number" id="sensInput" step="0.001" min="0.001" value="1">
+    </div>
+    <div class="input-row">
+      <span class="input-label">DPI</span>
+      <input type="number" id="simDpiInput" step="100" min="100" value="1200">
+    </div>
+    <div class="presets">
+      <button class="preset-btn" onclick="setSimDpi(400)">400</button>
+      <button class="preset-btn" onclick="setSimDpi(800)">800</button>
+      <button class="preset-btn active" onclick="setSimDpi(1200)">1200</button>
+      <button class="preset-btn" onclick="setSimDpi(1600)">1600</button>
+      <button class="preset-btn" onclick="setSimDpi(3200)">3200</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Crosshair Style</div>
+    <div class="input-row">
+      <select id="crosshairSelect" onchange="updateCrosshairStyle()">
+        <option value="classic">Classic (Val)</option>
+        <option value="cs2">Default (CS2)</option>
+        <option value="dot">Dot (Apex)</option>
+        <option value="overwatch">Overwatch</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section">
+    <button class="lock-btn" id="lockBtn" onclick="toggleLock()">Lock eDPI: OFF</button>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Keybinds</div>
+    <div class="keybinds">
+      <div class="kb-row"><span class="kb-key">U / I</span><span class="kb-desc">Sens ±0.005</span></div>
+      <div class="kb-row"><span class="kb-key">Esc</span><span class="kb-desc">Release mouse / pause run</span></div>
+      <div class="kb-row"><span class="kb-key">Click</span><span class="kb-desc">Lock cursor</span></div>
+      <div class="kb-row"><span class="kb-key">R</span><span class="kb-desc">Restart minigame</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Fold tabs -->
+<div id="hudTab" onclick="unfoldHud()">HUD</div>
+<div id="mgTab">RUN ACTIVE</div>
+
+<!-- Minigame launcher -->
+<button id="playMinigameBtn" onclick="openMinigamePanel()">▶ Play Aim Minigame</button>
+
+<div id="aboutPanel">
+  Hello! Aimulator+ is a mouse sensitivity simulator for FPS games — feel your real sens/DPI before you tab into a match, then test your aim with the built-in minigame.<br><br>
+  Made by <a href="https://github.com/aquuamon" target="_blank" rel="noopener">github.com/aquuamon</a>.
+</div>
+
+<!-- Minigame panel -->
+<div id="minigamePanel" class="hidden">
+  <div class="hud-header">Aim Minigame <span class="mg-close" onclick="closeMinigamePanel()">✕</span></div>
+  <div class="panel-body">
+    <div class="section">
+      <input type="text" class="mg-input" id="mgUsername" placeholder="Your Name" autocomplete="off">
+      <div class="mg-btn-row">
+        <button class="mg-btn" id="mgStartBtn" onclick="startMinigame()">Start Game</button>
+        <button class="mg-btn danger hidden" id="mgResetBtn" onclick="resetMinigame()">Reset</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Live Stats</div>
+      <div class="mg-stat-row"><span class="mg-stat-label">Score</span><span class="mg-stat-value highlight" id="mgScore">0</span></div>
+      <div class="mg-stat-row"><span class="mg-stat-label">Avg Reaction</span><span class="mg-stat-value" id="mgAvgRt">0ms</span></div>
+      <div class="mg-timer-track"><div class="mg-timer-fill" id="mgTimerFill"></div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Reaction Log</div>
+      <div class="mg-list" id="mgReactionList"></div>
+      <div class="mg-stat-row" style="margin-top:6px;"><span class="mg-stat-label">Fastest</span><span class="mg-stat-value" id="mgFastest">—</span></div>
+      <div class="mg-stat-row"><span class="mg-stat-label">Slowest</span><span class="mg-stat-value" id="mgSlowest">—</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Audio</div>
+      <button class="mg-btn" id="mgMuteBtn" onclick="toggleMgMute()" style="width:100%;">🔊 Mute Music</button>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Leaderboard</div>
+      <div id="mgLeaderboard"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Countdown -->
+<div id="mgCountdown"></div>
+
+<!-- Live in-game HUD -->
+<div id="mgLiveHud">
+  <span class="mg-live-score" id="mgLiveScore">0</span>
+  <div class="mg-live-track"><div class="mg-live-fill" id="mgLiveTimerFill"></div></div>
+</div>
+
+<!-- Results modal -->
+<div id="mgResults">
+  <div class="box">
+    <h2>Run Complete</h2>
+    <div class="row"><span>Score</span><span id="mgResScore">0</span></div>
+    <div class="row"><span>Avg Reaction</span><span id="mgResAvg">0ms</span></div>
+    <button onclick="shareMgResult()" style="background:#ffcb00; margin-bottom:8px;">🔗 Share with a Friend</button>
+    <button onclick="closeMgResults()">Close</button>
+  </div>
+</div>
+
+<canvas id="confettiCanvas"></canvas>
+
+<!-- Pause overlay -->
+<div id="mgPauseOverlay">
+  <div class="box">
+    <h2>Paused</h2>
+    <p>Click resume to lock back in, or stop to end the run.</p>
+    <button id="mgResumeBtn" onclick="resumeMinigame()">Resume</button>
+    <button id="mgStopBtn" onclick="stopMinigameFromPause()">Stop Game</button>
+  </div>
+</div>
+
+<!-- Unlocked overlay (light, non-blocking) -->
+<div id="overlay">
+  <h1 class="title">Aimulator+</h1>
+  <div class="sub">Put your aim to the test.</div>
+  <div class="click-hint">Click anywhere to lock cursor</div>
+  <div id="challengeBanner" class="hidden"></div>
+</div>
+
+<!-- NEW: Locked-mode indicator -->
+<div id="lockIndicator">
+  <span>🔒 Cursor Locked</span>
+  <span class="kb-key">ESC</span>
+  <span>to unlock &amp; adjust settings</span>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+// Game Yaw Constants (Degrees per count at 1.0 sens)
+const GAME_YAWS = {
+  default: 0.07,
+  valorant: 0.07,
+  cs2: 0.022,
+  apex: 0.022,
+  ow2: 0.0066,
+  r6: 0.00573
+};
+
+let REAL_DPI = 1200;
+let simDpi = 1200;
+let sens = 1;
+let currentGame = 'default';
+let currentYaw = GAME_YAWS[currentGame];
+let lockedEDPI = null;
+let lockEnabled = false;
+
+let posX = 0, posY = 0;
+let trail = [];
+const TRAIL_MAX = 40;
+
+let missFlash = 0;
+let crosshairStyle = 'classic';
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+function syncHudHeight() {
+  const h = document.getElementById('hud').offsetHeight;
+  document.documentElement.style.setProperty('--hud-h', h + 'px');
+}
+window.addEventListener('resize', syncHudHeight);
+new ResizeObserver(syncHudHeight).observe(document.getElementById('hud'));
+syncHudHeight();
+checkChallengeLink();
+
+// --- Setup ---
+function setSetupDpi(v) {
+  document.getElementById('realDpiInput').value = v;
+  document.querySelectorAll('.setup-presets button').forEach(b => {
+    b.classList.toggle('active', parseInt(b.textContent) === v);
+  });
+}
+
+function confirmSetup() {
+  const val = parseInt(document.getElementById('realDpiInput').value);
+  if (!val || val < 100) return;
+  REAL_DPI = val;
+  document.getElementById('realDpiDisplay').textContent = REAL_DPI;
+  document.getElementById('setup').classList.add('hidden');
+  updateStats();
+}
+
+// --- Game Presets ---
+function applyGamePreset() {
+  const select = document.getElementById('gameSelect');
+  currentGame = select.value;
+  currentYaw = GAME_YAWS[currentGame];
+
+  // Default sens values tuned so each game lands near its researched
+  // pro-average cm/360 at 1200 DPI (sources: ProSettings.net-derived
+  // aggregators, cross-checked Sep 2026): Valorant ~32cm, CS2 ~47cm,
+  // Apex ~26cm, OW2 ~29cm, R6 ~40cm. "Default" is a neutral 1.0 baseline,
+  // not tied to any specific game.
+  let defaultSens = 1;
+  if (currentGame === 'valorant') defaultSens = 0.34;
+  if (currentGame === 'cs2') defaultSens = 0.737;
+  if (currentGame === 'apex') defaultSens = 1.332;
+  if (currentGame === 'ow2') defaultSens = 3.981;
+  if (currentGame === 'r6') defaultSens = 3.325;
+
+  sens = defaultSens;
+  document.getElementById('sensInput').value = sens;
+  if (lockEnabled) lockedEDPI = simDpi * sens;
+  updateStats();
+}
+
+// --- Stats ---
+function updateStats() {
+  const edpi = simDpi * sens;
+  const cm360 = 360 / (sens * currentYaw * (simDpi / 2.54));
+
+  document.getElementById('simDpiDisplay').textContent = simDpi;
+  document.getElementById('simDpiInput').value = simDpi;
+  document.getElementById('sensInput').value = sens.toFixed(4).replace(/\.?0+$/, '') || sens;
+  document.getElementById('edpiDisplay').textContent = edpi.toFixed(1);
+  document.getElementById('cm360Display').textContent = cm360.toFixed(2) + ' cm';
+
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.textContent) === simDpi);
+  });
+}
+
+function setSimDpi(v) {
+  simDpi = v;
+  if (lockEnabled && lockedEDPI !== null) {
+    sens = lockedEDPI / simDpi;
+    sens = Math.max(0.001, sens);
+  }
+  updateStats();
+}
+
+function toggleLock() {
+  lockEnabled = !lockEnabled;
+  const btn = document.getElementById('lockBtn');
+  if (lockEnabled) {
+    lockedEDPI = simDpi * sens;
+    btn.textContent = 'Lock eDPI: ON';
+    btn.classList.add('active');
+  } else {
+    lockedEDPI = null;
+    btn.textContent = 'Lock eDPI: OFF';
+    btn.classList.remove('active');
+  }
+}
+
+function updateCrosshairStyle() {
+  crosshairStyle = document.getElementById('crosshairSelect').value;
+}
+
+// Input listeners
+document.getElementById('sensInput').addEventListener('change', e => {
+  const v = parseFloat(e.target.value);
+  if (v > 0) {
+    sens = v;
+    if (lockEnabled) lockedEDPI = simDpi * sens;
+    updateStats();
+  }
+});
+
+document.getElementById('simDpiInput').addEventListener('change', e => {
+  const v = parseInt(e.target.value);
+  if (v >= 100) setSimDpi(v);
+});
+
+// ============ MINIGAME ============
+const bgMusic = new Audio('sound/bgm.mp3');
+bgMusic.loop = true;
+bgMusic.volume = 0;
+const MG_MUSIC_VOLUME = 0.35;
+let mgMuted = false;
+const hitSound = new Audio('sound/hit.mp3');
+hitSound.volume = 0.95;
+const completedSound = new Audio('sound/completed.mp3');
+completedSound.volume = 0.85;
+
+let fadeInterval, speedInterval, mgTimerInterval, mgCountdownInterval;
+let mgActive = false;
+let mgPaused = false;
+let mgCountingDown = false;
+let mgScore = 0;
+let mgReactionTimes = [];
+let mgTargetStart = 0;
+let mgTarget = null; // {x, y, r}
+let mgTimeLeft = 20;
+const MG_DURATION = 20;
+const MG_TARGET_R = 24;
+
+function foldPanelsForRun() {
+  document.getElementById('hud').classList.add('folded');
+  document.getElementById('minigamePanel').classList.add('folded');
+  document.getElementById('aboutPanel').classList.add('folded');
+  document.getElementById('hudTab').classList.add('visible');
+  document.getElementById('mgTab').classList.add('visible');
+}
+function unfoldPanelsAfterRun() {
+  document.getElementById('hud').classList.remove('folded');
+  document.getElementById('minigamePanel').classList.remove('folded');
+  document.getElementById('aboutPanel').classList.remove('folded');
+  document.getElementById('hudTab').classList.remove('visible');
+  document.getElementById('mgTab').classList.remove('visible');
+}
+function unfoldHud() {
+  // Manual peek only allowed when no run is active
+  if (!mgActive) document.getElementById('hud').classList.remove('folded');
+}
+
+
+function fadeInMusic(duration = 1000) {
+  clearInterval(fadeInterval);
+  bgMusic.volume = 0; bgMusic.playbackRate = 1;
+  if (!mgMuted) bgMusic.play().catch(()=>{});
+  const target = mgMuted ? 0 : MG_MUSIC_VOLUME, steps = 20, stepTime = duration / steps, vStep = target / steps;
+  fadeInterval = setInterval(() => {
+    if (bgMusic.volume < target) bgMusic.volume = Math.min(bgMusic.volume + vStep, target);
+    else clearInterval(fadeInterval);
+  }, stepTime);
+}
+function fadeOutMusic(duration = 1000, cb) {
+  clearInterval(fadeInterval); clearInterval(speedInterval);
+  const steps = 20, stepTime = duration / steps, vStep = bgMusic.volume / steps;
+  fadeInterval = setInterval(() => {
+    if (bgMusic.volume > 0) bgMusic.volume = Math.max(bgMusic.volume - vStep, 0);
+    else {
+      clearInterval(fadeInterval);
+      bgMusic.pause(); bgMusic.currentTime = 0; bgMusic.playbackRate = 1;
+      if (cb) cb();
+    }
+  }, stepTime);
+}
+function speedUpMusic() {
+  clearInterval(speedInterval);
+  const targetSpeed = 1.5, duration = 8000, steps = 20, stepTime = duration / steps;
+  const speedStep = (targetSpeed - 1) / steps;
+  speedInterval = setInterval(() => {
+    if (bgMusic.playbackRate < targetSpeed) bgMusic.playbackRate = Math.min(bgMusic.playbackRate + speedStep, targetSpeed);
+    else clearInterval(speedInterval);
+  }, stepTime);
+}
+
+function toggleMgMute() {
+  mgMuted = !mgMuted;
+  const btn = document.getElementById('mgMuteBtn');
+  btn.textContent = mgMuted ? '🔇 Unmute Music' : '🔊 Mute Music';
+  if (mgMuted) {
+    clearInterval(fadeInterval);
+    bgMusic.volume = 0;
+  } else if (mgActive) {
+    bgMusic.volume = MG_MUSIC_VOLUME;
+    if (bgMusic.paused) bgMusic.play().catch(()=>{});
+  }
+}
+
+function openMinigamePanel() {
+  document.getElementById('minigamePanel').classList.remove('hidden');
+  document.getElementById('playMinigameBtn').classList.add('hidden');
+  renderMgLeaderboard();
+}
+function closeMinigamePanel() {
+  if (mgActive) return;
+  document.getElementById('minigamePanel').classList.add('hidden');
+  document.getElementById('playMinigameBtn').classList.remove('hidden');
+}
+
+function spawnTarget() {
+  const pad = 60;
+  mgTarget = {
+    x: (Math.random() - 0.5) * (canvas.width - pad * 2),
+    y: (Math.random() - 0.5) * (canvas.height - pad * 2),
+    r: MG_TARGET_R
+  };
+  mgTargetStart = Date.now();
+}
+
+function showMgCountdown(cb) {
+  const el = document.getElementById('mgCountdown');
+  el.classList.add('visible');
+  mgCountingDown = true;
+  let count = 3;
+  el.textContent = count;
+  mgCountdownInterval = setInterval(() => {
+    if (mgPaused) return;
+    count--;
+    if (count > 0) el.textContent = count;
+    else if (count === 0) el.textContent = 'GO!';
+    else {
+      clearInterval(mgCountdownInterval);
+      mgCountingDown = false;
+      el.classList.remove('visible');
+      cb();
+    }
+  }, 1000);
+}
+
+function startMinigame() {
+  const name = document.getElementById('mgUsername').value.trim();
+  if (!name) { alert('Please enter your name!'); return; }
+
+  document.getElementById('mgStartBtn').disabled = true;
+  document.getElementById('mgUsername').disabled = true;
+  document.getElementById('mgResetBtn').classList.remove('hidden');
+
+  if (document.pointerLockElement !== canvas) canvas.requestPointerLock();
+  foldPanelsForRun();
+
+  showMgCountdown(() => {
+    mgScore = 0;
+    mgReactionTimes = [];
+    mgPaused = false;
+    document.getElementById('mgReactionList').innerHTML = '';
+    document.getElementById('mgScore').textContent = '0';
+    document.getElementById('mgAvgRt').textContent = '0ms';
+    document.getElementById('mgFastest').textContent = '—';
+    document.getElementById('mgSlowest').textContent = '—';
+    document.getElementById('mgLiveScore').textContent = '0';
+    mgActive = true;
+
+    document.getElementById('mgLiveHud').classList.add('visible');
+
+    bgMusic.currentTime = 0;
+    fadeInMusic(1200);
+
+    spawnTarget();
+
+    mgTimeLeft = MG_DURATION;
+    document.getElementById('mgTimerFill').style.width = '100%';
+    document.getElementById('mgLiveTimerFill').style.width = '100%';
+
+    runMgTimer();
+  });
+}
+
+function runMgTimer() {
+  clearInterval(mgTimerInterval);
+  mgTimerInterval = setInterval(() => {
+    if (mgPaused) return;
+    mgTimeLeft--;
+    const pct = (mgTimeLeft / MG_DURATION) * 100;
+    document.getElementById('mgTimerFill').style.width = pct + '%';
+    document.getElementById('mgLiveTimerFill').style.width = pct + '%';
+    if (mgTimeLeft === 8) speedUpMusic();
+    if (mgTimeLeft <= 0) {
+      clearInterval(mgTimerInterval);
+      endMinigame();
+    }
+  }, 1000);
+}
+
+function pauseMinigame() {
+  if ((!mgActive && !mgCountingDown) || mgPaused) return;
+  mgPaused = true;
+  clearInterval(fadeInterval);
+  bgMusic.volume = 0;
+  bgMusic.pause();
+  document.getElementById('mgLiveHud').classList.add('hidden');
+  document.getElementById('mgPauseOverlay').classList.add('visible');
+}
+
+function resumeMinigame() {
+  if ((!mgActive && !mgCountingDown) || !mgPaused) return;
+  mgPaused = false;
+  document.getElementById('mgPauseOverlay').classList.remove('visible');
+  if (mgActive) document.getElementById('mgLiveHud').classList.remove('hidden');
+  if (!mgMuted && mgActive) fadeInMusic(400);
+  if (document.pointerLockElement !== canvas) canvas.requestPointerLock();
+}
+
+function stopMinigameFromPause() {
+  document.getElementById('mgPauseOverlay').classList.remove('visible');
+  resetMinigame();
+}
+
+function restartMinigame() {
+  if (!mgActive && !mgPaused && !mgCountingDown) return;
+  clearInterval(mgTimerInterval);
+  clearInterval(mgCountdownInterval);
+  fadeOutMusic(300);
+  mgActive = false;
+  mgPaused = false;
+  mgCountingDown = false;
+  mgTarget = null;
+  document.getElementById('mgPauseOverlay').classList.remove('visible');
+  document.getElementById('mgLiveHud').classList.remove('visible');
+  document.getElementById('mgCountdown').classList.remove('visible');
+  startMinigame();
+}
+
+function handleMgHit() {
+  if (!mgActive || mgPaused || !mgTarget) return;
+  hitSound.currentTime = 0; hitSound.play().catch(()=>{});
+
+  const rt = Date.now() - mgTargetStart;
+  mgReactionTimes.push(rt);
+  mgScore++;
+
+  document.getElementById('mgScore').textContent = mgScore;
+  document.getElementById('mgLiveScore').textContent = mgScore;
+
+  const entry = document.createElement('div');
+  entry.className = 'mg-list-entry';
+  entry.textContent = rt + ' ms';
+  const list = document.getElementById('mgReactionList');
+  list.appendChild(entry);
+  list.scrollTop = list.scrollHeight;
+
+  const avg = mgReactionTimes.reduce((a,b)=>a+b,0) / mgReactionTimes.length;
+  const fastest = Math.min(...mgReactionTimes);
+  const slowest = Math.max(...mgReactionTimes);
+  document.getElementById('mgAvgRt').textContent = Math.round(avg) + 'ms';
+  document.getElementById('mgFastest').textContent = fastest + 'ms';
+  document.getElementById('mgSlowest').textContent = slowest + 'ms';
+  list.querySelectorAll('.mg-list-entry').forEach(e => {
+    e.classList.remove('fastest','slowest');
+    const v = parseInt(e.textContent);
+    if (v === fastest) e.classList.add('fastest');
+    if (v === slowest) e.classList.add('slowest');
+  });
+
+  spawnTarget();
+}
+
+function endMinigame() {
+  mgActive = false;
+  mgPaused = false;
+  mgCountingDown = false;
+  mgTarget = null;
+  document.getElementById('mgLiveHud').classList.remove('visible');
+  document.getElementById('mgPauseOverlay').classList.remove('visible');
+  if (document.pointerLockElement === canvas) document.exitPointerLock();
+  unfoldPanelsAfterRun();
+
+  fadeOutMusic(1000, () => { completedSound.currentTime = 0; completedSound.play().catch(()=>{}); });
+
+  document.getElementById('mgStartBtn').disabled = false;
+  document.getElementById('mgUsername').disabled = false;
+  document.getElementById('mgResetBtn').classList.add('hidden');
+
+  const name = document.getElementById('mgUsername').value.trim();
+  const avg = mgReactionTimes.reduce((a,b)=>a+b,0) / mgReactionTimes.length || 0;
+
+  document.getElementById('mgResScore').textContent = mgScore;
+  document.getElementById('mgResAvg').textContent = Math.round(avg) + 'ms';
+  document.getElementById('mgResults').classList.add('visible');
+  spawnConfetti();
+
+  const leaderboard = JSON.parse(localStorage.getItem('mgLeaderboard')) || [];
+  leaderboard.push({ name, score: mgScore, avg });
+  leaderboard.sort((a,b) => b.score - a.score);
+  try {
+    localStorage.setItem('mgLeaderboard', JSON.stringify(leaderboard));
+  } catch (e) {
+    // Storage unavailable (private browsing, quota, etc.) — fail silently, run still completes
+  }
+  renderMgLeaderboard();
+}
+
+function resetMinigame() {
+  clearInterval(mgTimerInterval);
+  clearInterval(mgCountdownInterval);
+  fadeOutMusic(600);
+  if (document.pointerLockElement === canvas) document.exitPointerLock();
+
+  mgActive = false;
+  mgPaused = false;
+  mgCountingDown = false;
+  mgTarget = null;
+  mgScore = 0;
+  mgReactionTimes = [];
+  unfoldPanelsAfterRun();
+
+  document.getElementById('mgCountdown').classList.remove('visible');
+  document.getElementById('mgLiveHud').classList.remove('visible');
+  document.getElementById('mgPauseOverlay').classList.remove('visible');
+  document.getElementById('mgReactionList').innerHTML = '';
+  document.getElementById('mgScore').textContent = '0';
+  document.getElementById('mgAvgRt').textContent = '0ms';
+  document.getElementById('mgFastest').textContent = '—';
+  document.getElementById('mgSlowest').textContent = '—';
+  document.getElementById('mgTimerFill').style.width = '100%';
+
+  document.getElementById('mgResetBtn').classList.add('hidden');
+  document.getElementById('mgStartBtn').disabled = false;
+  document.getElementById('mgUsername').disabled = false;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function renderMgLeaderboard() {
+  const box = document.getElementById('mgLeaderboard');
+  let leaderboard = [];
+  try {
+    leaderboard = JSON.parse(localStorage.getItem('mgLeaderboard')) || [];
+  } catch (e) {
+    leaderboard = [];
+  }
+  box.innerHTML = leaderboard
+    .sort((a,b) => b.score - a.score)
+    .slice(0, 5)
+    .map((e, i) => `
+      <div class="mg-lb-row">
+        <span class="mg-lb-rank">${i+1}</span>
+        <span class="mg-lb-name">${escapeHtml(e.name)}</span>
+        <span class="mg-lb-score">${e.score}</span>
+      </div>
+    `).join('') || '<div class="mg-stat-label">No runs yet</div>';
+}
+
+// --- Confetti ---
+const confettiCanvas = document.getElementById('confettiCanvas');
+const confettiCtx = confettiCanvas.getContext('2d');
+let confettiParticles = [];
+let confettiRunning = false;
+const CONFETTI_COLORS = ['#5dbaf2', '#22d3ee', '#f472b6', '#facc15', '#a78bfa', '#ffffff'];
+
+function spawnConfetti() {
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+  confettiParticles = [];
+  const count = 140;
+  for (let i = 0; i < count; i++) {
+    confettiParticles.push({
+      x: Math.random() * confettiCanvas.width,
+      y: -20 - Math.random() * confettiCanvas.height * 0.5,
+      w: 6 + Math.random() * 6,
+      h: 4 + Math.random() * 8,
+      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      vy: 2 + Math.random() * 3,
+      vx: (Math.random() - 0.5) * 2,
+      rot: Math.random() * 360,
+      vrot: (Math.random() - 0.5) * 10
+    });
+  }
+  confettiCanvas.classList.add('visible');
+  confettiRunning = true;
+  requestAnimationFrame(drawConfetti);
+}
+
+function drawConfetti() {
+  if (!confettiRunning) return;
+  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+  let anyOnScreen = false;
+  for (const p of confettiParticles) {
+    p.y += p.vy;
+    p.x += p.vx;
+    p.rot += p.vrot;
+    if (p.y < confettiCanvas.height + 20) anyOnScreen = true;
+
+    confettiCtx.save();
+    confettiCtx.translate(p.x, p.y);
+    confettiCtx.rotate(p.rot * Math.PI / 180);
+    confettiCtx.fillStyle = p.color;
+    confettiCtx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+    confettiCtx.restore();
+  }
+
+  if (anyOnScreen) {
+    requestAnimationFrame(drawConfetti);
+  } else {
+    stopConfetti();
+  }
+}
+
+function stopConfetti() {
+  confettiRunning = false;
+  confettiCanvas.classList.remove('visible');
+  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+}
+
+function closeMgResults() {
+  const modal = document.getElementById('mgResults');
+  modal.classList.add('fading');
+  setTimeout(() => {
+    modal.classList.remove('visible');
+    modal.classList.remove('fading');
+  }, 400);
+  stopConfetti();
+}
+
+function shareMgResult() {
+  const name = document.getElementById('mgUsername').value.trim() || 'A friend';
+  const score = document.getElementById('mgResScore').textContent;
+  const avg = document.getElementById('mgResAvg').textContent;
+  const url = new URL(window.location.href.split('?')[0]);
+  url.searchParams.set('challenge', name);
+  url.searchParams.set('score', score);
+  url.searchParams.set('avg', avg);
+
+  const shareText = `${name} scored ${score} (avg ${avg}) on Aimulator+. Think you can beat it?`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Aimulator+', text: shareText, url: url.toString() }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(url.toString()).then(() => {
+      const btn = event.target;
+      const original = btn.textContent;
+      btn.textContent = '✓ Link Copied!';
+      setTimeout(() => { btn.textContent = original; }, 1800);
+    }).catch(() => {
+      prompt('Copy this link to share:', url.toString());
+    });
+  }
+}
+
+function checkChallengeLink() {
+  const params = new URLSearchParams(window.location.search);
+  const name = params.get('challenge');
+  const score = params.get('score');
+  const avg = params.get('avg');
+  if (!name || !score) return;
+  const banner = document.getElementById('challengeBanner');
+  banner.textContent = `🎯 ${decodeURIComponent(name)} scored ${score} (avg ${avg}) — beat it!`;
+  banner.classList.remove('hidden');
+  document.getElementById('overlay').classList.add('has-challenge');
+}
+
+// --- Pointer lock ---
+canvas.addEventListener('click', () => {
+  if (document.pointerLockElement !== canvas) {
+    canvas.requestPointerLock();
+    return;
+  }
+  if (mgActive) handleMgClick();
+});
+
+function handleMgClick() {
+  if (!mgTarget) return;
+  const dx = posX - mgTarget.x;
+  const dy = posY - mgTarget.y;
+  if (Math.sqrt(dx*dx + dy*dy) <= mgTarget.r) handleMgHit();
+}
+
+document.addEventListener('pointerlockchange', () => {
+  const locked = document.pointerLockElement === canvas;
+  // Overlay (unlocked state) + lock indicator (locked state) toggle together
+  document.getElementById('overlay').classList.toggle('hidden', locked);
+  document.getElementById('lockIndicator').classList.toggle('visible', locked);
+
+  // ESC mid-run or mid-countdown now pauses instead of ending the run
+  if (!locked && (mgActive || mgCountingDown) && !mgPaused) {
+    pauseMinigame();
+  } else if (locked && mgPaused) {
+    resumeMinigame();
+  }
+});
+
+document.addEventListener('mousemove', e => {
+  if (document.pointerLockElement !== canvas) return;
+
+  const dpiRatio = simDpi / REAL_DPI;
+  const scaledX = e.movementX * dpiRatio;
+  const scaledY = e.movementY * dpiRatio;
+
+  const pixelsPerCount = sens * currentYaw * (canvas.height / 100);
+
+  posX += scaledX * pixelsPerCount;
+  posY += scaledY * pixelsPerCount;
+
+  const pad = 20;
+  posX = Math.max(-canvas.width/2 + pad, Math.min(canvas.width/2 - pad, posX));
+  posY = Math.max(-canvas.height/2 + pad, Math.min(canvas.height/2 - pad, posY));
+
+  trail.push({ x: posX, y: posY, t: Date.now() });
+  if (trail.length > TRAIL_MAX) trail.shift();
+});
+
+document.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === 'u') sens = Math.max(0.001, sens - 0.005);
+  if (k === 'i') sens = Math.max(0.001, sens + 0.005);
+  if (lockEnabled && lockedEDPI !== null) sens = lockedEDPI / simDpi;
+  if (k === 'u' || k === 'i') updateStats();
+  if (k === 'r' && (mgActive || mgPaused || mgCountingDown)) restartMinigame();
+});
+
+// --- Draw ---
+function drawCrosshair(cx, cy) {
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'square';
+
+  switch(crosshairStyle) {
+    case 'classic': {
+      ctx.strokeStyle = '#5dbaf2';
+      const gap = 5;
+      const len = 8;
+      ctx.beginPath(); ctx.moveTo(cx - gap - len, cy); ctx.lineTo(cx - gap, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + gap, cy); ctx.lineTo(cx + gap + len, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx, cy - gap - len); ctx.lineTo(cx, cy - gap); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx, cy + gap); ctx.lineTo(cx, cy + gap + len); ctx.stroke();
+      ctx.fillStyle = '#5dbaf2';
+      ctx.beginPath(); ctx.arc(cx, cy, 1.5, 0, Math.PI*2); ctx.fill();
+      break;
+    }
+
+    case 'cs2': {
+      ctx.strokeStyle = '#00ff00';
+      const csGap = 4;
+      const csLen = 12;
+      ctx.beginPath(); ctx.moveTo(cx - csGap - csLen, cy); ctx.lineTo(cx - csGap, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + csGap, cy); ctx.lineTo(cx + csGap + csLen, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx, cy - csGap - csLen); ctx.lineTo(cx, cy - csGap); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx, cy + csGap); ctx.lineTo(cx, cy + csGap + csLen, cy); ctx.stroke();
+      break;
+    }
+
+    case 'dot': {
+      ctx.fillStyle = '#ff3333';
+      ctx.beginPath(); ctx.arc(cx, cy, 2, 0, Math.PI*2); ctx.fill();
+      break;
+    }
+
+    case 'overwatch': {
+      ctx.strokeStyle = '#00ffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI*2); ctx.stroke();
+      ctx.fillStyle = '#00ffff';
+      ctx.beginPath(); ctx.arc(cx, cy, 2, 0, Math.PI*2); ctx.fill();
+      break;
+    }
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const cx = canvas.width / 2 + posX;
+  const cy = canvas.height / 2 + posY;
+
+  // Grid (subtle)
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
+  const gridSize = 60;
+  for (let x = 0; x < canvas.width; x += gridSize) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+  }
+  for (let y = 0; y < canvas.height; y += gridSize) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+  }
+
+  // Center reference dot (world origin)
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.beginPath();
+  ctx.arc(canvas.width/2, canvas.height/2, 3, 0, Math.PI*2);
+  ctx.fill();
+
+  // Trail
+  if (trail.length > 1) {
+    for (let i = 1; i < trail.length; i++) {
+      const p = trail[i-1];
+      const c = trail[i];
+      const age = (i / trail.length);
+      ctx.strokeStyle = `rgba(93,186,242,${age * 0.35})`;
+      ctx.lineWidth = age * 2;
+      ctx.beginPath();
+      ctx.moveTo(canvas.width/2 + p.x, canvas.height/2 + p.y);
+      ctx.lineTo(canvas.width/2 + c.x, canvas.height/2 + c.y);
+      ctx.stroke();
+    }
+  }
+
+  // Miss flash
+  if (missFlash > 0) {
+    ctx.fillStyle = `rgba(255,50,50,${missFlash * 0.015})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    missFlash--;
+  }
+
+  // Minigame target
+  if (mgActive && mgTarget) {
+    const tx = canvas.width/2 + mgTarget.x;
+    const ty = canvas.height/2 + mgTarget.y;
+    const pulse = 1 + Math.sin(Date.now() / 200) * 0.04;
+    ctx.beginPath();
+    ctx.arc(tx, ty, mgTarget.r * pulse, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(93,186,242,0.18)';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#5dbaf2';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(tx, ty, 3, 0, Math.PI*2);
+    ctx.fillStyle = '#5dbaf2';
+    ctx.fill();
+  }
+
+  drawCrosshair(cx, cy);
+
+  requestAnimationFrame(draw);
+}
+
+updateStats();
+draw();
+</script>
+</body>
+</html>
